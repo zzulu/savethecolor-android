@@ -82,8 +82,9 @@ public class ColorItem implements Parcelable {
      *
      * @param color the color value.
      */
-    public ColorItem(int color) {
-        mId = mCreationTime = System.currentTimeMillis();
+    public ColorItem(int color, int id) {
+        mId = id;
+        mCreationTime = System.currentTimeMillis();
         mColor = color;
     }
 

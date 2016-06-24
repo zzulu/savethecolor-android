@@ -58,7 +58,6 @@ public class CameraPreview extends TextureView implements TextureView.SurfaceTex
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         // The Surface has been created, now tell the camera where to draw the preview.
         try {
-            Log.d("surface","start preview!");
             mCamera.setPreviewTexture(surface);
             mCamera.setPreviewCallback(this);
             mCamera.startPreview();

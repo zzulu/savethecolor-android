@@ -3,7 +3,6 @@ package xyz.zzulu.savethecolor.fragments;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.BitmapFactory;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -16,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import xyz.zzulu.savethecolor.R;
-import xyz.zzulu.savethecolor.views.CameraPreview;
 
 /**
  * A simple {@link Fragment} subclass.

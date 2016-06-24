@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.Gravity;
@@ -24,8 +25,23 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.savagelook.android.UrlJsonAsyncTask;
+
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 
 import xyz.zzulu.savethecolor.R;
+import xyz.zzulu.savethecolor.data.ColorItem;
 import xyz.zzulu.savethecolor.data.ColorItems;
 import xyz.zzulu.savethecolor.utils.Cameras;
 import xyz.zzulu.savethecolor.views.CameraPreview;
@@ -50,28 +66,15 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
     private String mParam2;
 
 
-
-    /**
-     * A boolean for knowing the orientation of the activity.
-     */
     protected boolean mIsPortrait;
 
-
-    /**
-     * A simple {@link android.widget.FrameLayout} that contains the preview.
-     */
     protected FrameLayout mPreviewContainer;
 
-    /**
-     * The {@link CameraPreview} used for the preview.
-     */
     protected CameraPreview mCameraPreview;
 
-    /**
-     * A reference to the {@link xyz.zzulu.savethecolor.fragments.CameraFragment#mCameraAsyncTask} that gets the {@link android.hardware.Camera}.
-     */
     protected CameraAsyncTask mCameraAsyncTask;
 
+    private ColorCreateTask mTask = null;
 
     /**
      * A safe way to get an instance of the back {@link android.hardware.Camera}.
@@ -199,6 +202,10 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
 
     private OnFragmentInteractionListener mListener;
 
+
+    private String mURL = "http://savethecolor.xyz/api/colors";
+    private String mToken;
+
     public CameraFragment() {
         // Required empty public constructor
     }
@@ -212,22 +219,22 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
      * @return A new instance of fragment CameraFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static CameraFragment newInstance() {
+    public static CameraFragment newInstance(String token) {
         CameraFragment fragment = new CameraFragment();
-//        Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, token);
 //        args.putString(ARG_PARAM2, param2);
-//        fragment.setArguments(args);
+        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        if (getArguments() != null) {
-//            mParam1 = getArguments().getString(ARG_PARAM1);
-//            mParam2 = getArguments().getString(ARG_PARAM2);
-//        }
+
+        if (getArguments() != null) {
+            mToken = getArguments().getString(ARG_PARAM1);
+        }
     }
 
     @Override
@@ -347,7 +354,6 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
         super.onDestroy();
     }
 
-
     @Override
     public void onColorSelected(int color) {
         mSelectedColor = color;
@@ -367,8 +373,10 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
 
             case R.id.app_bar_main_save_button:
 
-//            ColorItems.saveColorItem(this, new ColorItem(mLastPickedColor));
-//            setSaveCompleted(true);
+
+                mTask = new ColorCreateTask(getContext(), ColorItem.makeHexString(mLastPickedColor));
+                mTask.execute(mURL);
+
 
                 break;
 
@@ -464,31 +472,31 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
     }
 
 // -------------------- Flash --------------------
-//    /**
-//     * Check if the device's camera supports flash.
-//     *
-//     * @return Returns true if the device's camera supports flash, false otherwise.
-//     */
-//    protected boolean isFlashSupported() {
-//        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
-//    }
-//
-//    /**
-//     * Toggle the device's camera flash.
-//     * {@link MainActivity#isFlashSupported()} should be called before using this methods.
-//     */
-//    protected void toggleFlash() {
-//        if (mCamera != null) {
-//            final Camera.Parameters parameters = mCamera.getParameters();
-//            final String flashParameter = mIsFlashOn ? Camera.Parameters.FLASH_MODE_OFF : Camera.Parameters.FLASH_MODE_TORCH;
-//            parameters.setFlashMode(flashParameter);
-//            mCamera.stopPreview();
-//            mCamera.setParameters(parameters);
-//            mCamera.startPreview();
-//            mIsFlashOn = !mIsFlashOn;
-//            invalidateOptionsMenu();
-//        }
-//    }
+    /**
+     * Check if the device's camera supports flash.
+     *
+     * @return Returns true if the device's camera supports flash, false otherwise.
+     */
+    protected boolean isFlashSupported() {
+        return getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+    }
+
+    /**
+     * Toggle the device's camera flash.
+     * {@link CameraFragment#isFlashSupported()} should be called before using this methods.
+     */
+    protected void toggleFlash() {
+        if (mCamera != null) {
+            final Camera.Parameters parameters = mCamera.getParameters();
+            final String flashParameter = mIsFlashOn ? Camera.Parameters.FLASH_MODE_OFF : Camera.Parameters.FLASH_MODE_TORCH;
+            parameters.setFlashMode(flashParameter);
+            mCamera.stopPreview();
+            mCamera.setParameters(parameters);
+            mCamera.startPreview();
+            mIsFlashOn = !mIsFlashOn;
+            getActivity().invalidateOptionsMenu();
+        }
+    }
 // -------------------- End --------------------
 
     /**
@@ -526,16 +534,15 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
 
     /**
      * Set the "save completed" state.
-     * <p/>
      * True means that the save is completed. The preview color should not be saved again.
      *
      * @param isSaveCompleted the "save completed" state.
      */
     protected void setSaveCompleted(boolean isSaveCompleted) {
         mSaveButton.setEnabled(!isSaveCompleted);
-        mSaveCompletedProgressAnimator.cancel();
-        mSaveCompletedProgressAnimator.setFloatValues(mSaveCompletedProgress, isSaveCompleted ? 0f : 1f);
-        mSaveCompletedProgressAnimator.start();
+//        mSaveCompletedProgressAnimator.cancel();
+//        mSaveCompletedProgressAnimator.setFloatValues(mSaveCompletedProgress, isSaveCompleted ? 0f : 1f);
+//        mSaveCompletedProgressAnimator.start();
 
         if (isSaveCompleted) {
             mConfirmSaveMessage.setVisibility(View.VISIBLE);
@@ -605,6 +612,9 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
                         , mIsPortrait);
                 //set optimal camera preview
                 cameraParameters.setPreviewSize(bestSize.width, bestSize.height);
+                if (cameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                }
                 camera.setParameters(cameraParameters);
 
                 //set camera orientation to match with current device orientation
@@ -652,5 +662,97 @@ public class CameraFragment extends Fragment implements CameraPreview.OnColorSel
             }
         }
     }
+
+
+
+    private class ColorCreateTask extends UrlJsonAsyncTask {
+
+        private final String mHex;
+
+        public ColorCreateTask(Context context, String hex) {
+            super(context);
+
+            mHex = hex;
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... urls) {
+
+            DefaultHttpClient client = new DefaultHttpClient();
+            HttpPost post = new HttpPost(urls[0]);
+            JSONObject holder = new JSONObject();
+            JSONObject colorObj = new JSONObject();
+            String response = null;
+            JSONObject json = new JSONObject();
+
+            try {
+                // setup the returned values in case
+                // something goes wrong
+                json.put("success", false);
+                json.put("info", "Something went wrong.");
+                // add the user email and password to
+                // the params
+                holder.put("auth_token", mToken);
+                colorObj.put("origin", mLastPickedColor);
+                colorObj.put("hex", mHex);
+                holder.put("color", colorObj);
+                StringEntity se = new StringEntity(holder.toString());
+                post.setEntity(se);
+
+                // setup the request headers
+                post.setHeader("Accept", "application/json");
+                post.setHeader("Content-Type", "application/json");
+
+                ResponseHandler<String> responseHandler = new BasicResponseHandler();
+                response = client.execute(post, responseHandler);
+                json = new JSONObject(response);
+
+            } catch (HttpResponseException e) {
+                e.printStackTrace();
+                Log.e("ClientProtocol", "" + e);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e("IO", "" + e);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return json;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject json) {
+            try {
+                if (json.getBoolean("success")) {
+                    // everything is ok
+                    ColorItems.saveColorItem(getActivity(), new ColorItem(mLastPickedColor, json.getJSONObject("data").getInt("id")));
+                    setSaveCompleted(true);
+
+                } else {
+
+                }
+                Toast.makeText(context, json.getString("info"), Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                // something went wrong: show a Toast with the exception message
+                Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();
+            } finally {
+                super.onPostExecute(json);
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mTask = null;
+        }
+
+    }
+
+
+
+
+
+
+
+
 
 }

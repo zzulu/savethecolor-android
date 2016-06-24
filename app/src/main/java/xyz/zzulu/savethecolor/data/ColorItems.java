@@ -189,6 +189,13 @@ public final class ColorItems {
         return false;
     }
 
+    public static boolean deleteColorItemAll(Context context) {
+        final SharedPreferences sharedPreferences = getPreferences(context);
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        return editor.commit();
+    }
+
     /**
      * Register a {@link xyz.zzulu.savethecolor.data.ColorItem}.
      * <p/>

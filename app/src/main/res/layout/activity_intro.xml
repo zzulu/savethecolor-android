@@ -31,20 +31,41 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:background="@color/white"
         android:weightSum="10">
 
-        <android.support.v4.view.ViewPager
-            android:id="@+id/container"
+        <ImageView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="9"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+            android:src="@drawable/intro"/>
 
-        <Button
-            android:id="@+id/next"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            >
+            <Button
+                android:id="@+id/sign_in"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/action_sign_in"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:id="@+id/sign_up"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/action_sign_up"
+                android:textColor="@color/white"/>
+
+
+
+        </LinearLayout>
 
 
     </LinearLayout>

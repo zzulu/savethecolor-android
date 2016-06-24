@@ -1,26 +1,28 @@
 package xyz.zzulu.savethecolor.activities;
 
+import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
-
+import android.graphics.PorterDuff;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.Button;
 import android.widget.TextView;
 
 import xyz.zzulu.savethecolor.R;
 
-public class IntroActivity extends AppCompatActivity {
+public class IntroActivity extends AppCompatActivity implements View.OnClickListener {
+
+    public static Activity mThisActivity;
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -36,7 +38,9 @@ public class IntroActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    private Button mBtn;
+    private Button mSignIn;
+    private Button mSignUp;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,18 +53,42 @@ public class IntroActivity extends AppCompatActivity {
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mSignIn = (Button) findViewById(R.id.sign_in);
+        mSignIn.getBackground().setColorFilter(0xFFB22929, PorterDuff.Mode.MULTIPLY);
+        mSignIn.setOnClickListener(this);
 
-        mBtn = (Button) findViewById(R.id.next);
-        mBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(IntroActivity.this, MainActivity.class);
-                startActivity(i);
-            }
-        });
+        mSignUp = (Button) findViewById(R.id.sign_up);
+        mSignUp.getBackground().setColorFilter(0xFFB22929, PorterDuff.Mode.MULTIPLY);
+        mSignUp.setOnClickListener(this);
+
+        mThisActivity = IntroActivity.this;
+
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        switch (v.getId()){
+            case R.id.sign_in:
+
+                Intent goLogin = new Intent(IntroActivity.this, LoginActivity.class);
+                startActivityForResult(goLogin,1);
+
+                break;
+            case R.id.sign_up:
+
+                Intent goSignUp = new Intent(IntroActivity.this, SignUpActivity.class);
+                startActivity(goSignUp);
+
+                break;
+            default:
+
+                break;
+
+
+        }
+
+
     }
 
     // When Image is selected from Gallery
@@ -107,6 +135,8 @@ public class IntroActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+
 
     /**
      * A placeholder fragment containing a simple view.
